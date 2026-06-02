@@ -14,18 +14,15 @@ export function useCreateTask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (newTask: TaskInsert): Promise<Task> => {
-      const { data, error } = await supabase
+    mutationFn: async (newTask: TaskInsert): Promise<void> => {
+      const { error } = await supabase
         .from('tasks')
         .insert(newTask)
-        .select()
-        .single()
 
       if (error) throw error
-      return data
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] })
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', variables.project_id] })
       toast.success('Task created')
     },
     onError: () => {

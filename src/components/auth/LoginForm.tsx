@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 const schema = z.object({
@@ -15,7 +14,6 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function LoginForm() {
-  const router = useRouter()
   const supabase = createClient()
 
   const {
@@ -43,7 +41,7 @@ export function LoginForm() {
           id="email"
           type="email"
           autoComplete="email"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="h-10 w-full rounded-lg border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/20"
           {...register('email')}
         />
         {errors.email && (
@@ -59,7 +57,7 @@ export function LoginForm() {
           id="password"
           type="password"
           autoComplete="current-password"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="h-10 w-full rounded-lg border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/20"
           {...register('password')}
         />
         {errors.password && (
@@ -70,7 +68,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="mt-1 h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSubmitting ? 'Signing in…' : 'Sign in'}
       </button>

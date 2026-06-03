@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, LogOut, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, LogOut, ChevronDown, CheckSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useProjects } from '@/hooks/useProjects'
@@ -26,8 +26,6 @@ export function Sidebar() {
     }
   }, [workspaces, activeWorkspaceId, setActiveWorkspaceId])
 
-  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
-
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     toast.success('Signed out')
@@ -39,7 +37,10 @@ export function Sidebar() {
     <aside className="flex h-screen w-60 flex-col border-r bg-card px-3 py-4">
 
       {/* App name */}
-      <div className="mb-6 px-2">
+      <div className="mb-6 flex items-center gap-2.5 px-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+          <CheckSquare className="h-4 w-4" />
+        </div>
         <span className="text-lg font-semibold tracking-tight">Taskflow</span>
       </div>
 
@@ -55,7 +56,7 @@ export function Sidebar() {
             <select
               value={activeWorkspaceId ?? ''}
               onChange={(e) => setActiveWorkspaceId(e.target.value)}
-              className="w-full appearance-none rounded-md border bg-background px-3 py-2 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-ring"
+              className="w-full appearance-none rounded-lg border bg-background px-3 py-2 pr-8 text-sm font-medium outline-none transition-colors hover:bg-accent/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               {workspaces.map((ws) => (
                 <option key={ws.id} value={ws.id}>
@@ -76,10 +77,10 @@ export function Sidebar() {
 
         <Link
           href="/dashboard"
-          className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent ${
+          className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
             pathname === '/dashboard'
-              ? 'bg-accent font-medium'
-              : 'text-muted-foreground'
+              ? 'bg-accent font-medium text-accent-foreground'
+              : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
           }`}
         >
           <LayoutDashboard className="h-4 w-4" />
@@ -96,14 +97,14 @@ export function Sidebar() {
               <Link
                 key={project.id}
                 href={`/dashboard/projects/${project.id}`}
-                className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent ${
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
                   pathname === `/dashboard/projects/${project.id}`
-                    ? 'bg-accent font-medium'
-                    : 'text-muted-foreground'
+                    ? 'bg-accent font-medium text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
                 }`}
               >
-                <FolderKanban className="h-4 w-4" />
-                {project.name}
+                <FolderKanban className="h-4 w-4 shrink-0" />
+                <span className="truncate">{project.name}</span>
               </Link>
             ))}
           </div>
@@ -111,10 +112,10 @@ export function Sidebar() {
       </nav>
 
       {/* Sign out — pinned to bottom */}
-      <div className="mt-auto">
+      <div className="mt-auto border-t pt-3">
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4 w-4" />
           Sign out

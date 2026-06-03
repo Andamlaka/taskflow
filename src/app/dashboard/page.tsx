@@ -22,12 +22,18 @@ function Modal({
 }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm rounded-xl bg-popover p-6 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150"
+        onClick={onClose}
+      />
+      <div className="relative z-10 w-full max-w-sm rounded-2xl border bg-popover p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-medium">{title}</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>

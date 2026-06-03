@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, AlertTriangle } from 'lucide-react'
 import { useQueryStates, parseAsString } from 'nuqs'
 import { useTasks } from '@/hooks/useTasks'
 import { useRealtimeTasks } from '@/hooks/useRealtimeTasks'
@@ -10,6 +10,8 @@ import { useCreateTask } from '@/hooks/useTaskMutations'
 import { TaskFilters } from '@/components/project/TaskFilters'
 import { TaskRow } from '@/components/project/TaskRow'
 import { TaskDetailPanel } from '@/components/task/TaskDetailPanel'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
+import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/supabase'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -20,7 +22,7 @@ interface ProjectViewProps {
 }
 
 export function ProjectView({ project }: ProjectViewProps) {
-  const { tasks, isLoading } = useTasks(project.id)
+  const { tasks, isLoading, error: tasksError } = useTasks(project.id)
   const { members } = useWorkspaceMembers(project.workspace_id)
   useRealtimeTasks(project.id)
 
@@ -29,6 +31,25 @@ export function ProjectView({ project }: ProjectViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [showNewTask, setShowNewTask] = useState(false)
+  const [overdueTasks, setOverdueTasks] = useState<unknown[] | null>(null)
+  const [loadingOverdue, setLoadingOverdue] = useState(false)
+
+  const supabase = createClient()
+
+  const fetchOverdue = async () => {
+    setLoadingOverdue(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('overdue-tasks', {
+        body: { project_id: project.id },
+      })
+      if (error) throw error
+      setOverdueTasks(data.overdue)
+    } catch {
+      setOverdueTasks([])
+    } finally {
+      setLoadingOverdue(false)
+    }
+  }
 
   const [filters] = useQueryStates({
     status: parseAsString.withDefault(''),
@@ -71,12 +92,22 @@ export function ProjectView({ project }: ProjectViewProps) {
               {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
             </p>
           </div>
-          <button
-            onClick={() => setShowNewTask(true)}
-            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> New task
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchOverdue}
+              disabled={loadingOverdue}
+              className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+            >
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              {loadingOverdue ? 'Loading…' : 'Overdue'}
+            </button>
+            <button
+              onClick={() => setShowNewTask(true)}
+              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" /> New task
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -116,6 +147,8 @@ export function ProjectView({ project }: ProjectViewProps) {
               <div key={i} className="h-12 animate-pulse rounded-lg border bg-muted" />
             ))}
           </div>
+        ) : tasksError ? (
+          <ErrorMessage message="Failed to load tasks." />
         ) : filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-16 text-center">
             <p className="text-sm text-muted-foreground">
@@ -143,6 +176,36 @@ export function ProjectView({ project }: ProjectViewProps) {
           </div>
         )}
       </div>
+
+      {/* Overdue tasks panel */}
+      {overdueTasks !== null && (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-sm font-medium text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+              Overdue tasks ({overdueTasks.length})
+            </h3>
+            <button onClick={() => setOverdueTasks(null)} className="text-amber-600 hover:text-amber-800">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {overdueTasks.length === 0 ? (
+            <p className="text-sm text-amber-700">No overdue tasks.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {(overdueTasks as Array<{ id: string; title: string; due_date: string; profiles: { full_name: string | null; email: string } | null }>).map((t) => (
+                <div key={t.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm shadow-sm">
+                  <span className="font-medium">{t.title}</span>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{t.profiles?.full_name ?? t.profiles?.email ?? 'Unassigned'}</span>
+                    <span className="text-red-500">{t.due_date}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Task detail side panel */}
       {selectedTask && (

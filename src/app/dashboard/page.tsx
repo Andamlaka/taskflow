@@ -7,6 +7,7 @@ import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useProjects } from '@/hooks/useProjects'
 import { useCreateWorkspace, useCreateProject } from '@/hooks/useWorkspaceMutations'
 import { ProjectCard } from '@/components/workspace/ProjectCard'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
 
 function Modal({
   open,
@@ -38,8 +39,8 @@ function Modal({
 
 export default function DashboardPage() {
   const { activeWorkspaceId } = useWorkspaceContext()
-  const { workspaces, isLoading: loadingWorkspaces } = useWorkspaces()
-  const { projects, isLoading: loadingProjects } = useProjects(activeWorkspaceId)
+  const { workspaces, isLoading: loadingWorkspaces, error: workspacesError } = useWorkspaces()
+  const { projects, isLoading: loadingProjects, error: projectsError } = useProjects(activeWorkspaceId)
 
   const createWorkspace = useCreateWorkspace()
   const createProject = useCreateProject()
@@ -80,6 +81,15 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
+  // ── Error ─────────────────────────────────────────────────────────────────
+  if (workspacesError) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <ErrorMessage message="Failed to load workspaces." />
       </div>
     )
   }
@@ -155,6 +165,8 @@ export default function DashboardPage() {
               <div key={i} className="h-36 animate-pulse rounded-xl border bg-muted" />
             ))}
           </div>
+        ) : projectsError ? (
+          <ErrorMessage message="Failed to load projects." />
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-16 text-center">
             <p className="text-sm text-muted-foreground">No projects in this workspace yet</p>

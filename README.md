@@ -64,4 +64,22 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Fill in `.env.local` with your Supabase project URL and anon key, then run `schema.sql` in the Supabase SQL Editor.
+Fill in `.env.local` with your Supabase project URL and anon key.
+
+## Database Setup
+
+1. Run `schema.sql` in the Supabase SQL Editor (creates tables, RLS, triggers, grants, realtime).
+2. Sign up at least one user through the app.
+3. Run `seed.sql` in the SQL Editor — auto-populates **2 workspaces, 4 projects, 15 tasks**
+   (across all statuses and assignees, including overdue ones) for the signed-up user(s).
+
+Seed is split from schema because Supabase seed rows must reference real `auth.users` IDs,
+which only exist after signup. `seed.sql` resolves the user IDs automatically.
+
+## Edge Function
+
+The `overdue-tasks` function lives in `supabase/functions/overdue-tasks/`. Deploy with:
+
+```bash
+supabase functions deploy overdue-tasks --project-ref <your-project-ref>
+```

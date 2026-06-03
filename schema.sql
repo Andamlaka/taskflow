@@ -103,8 +103,10 @@ CREATE POLICY "tasks_delete" ON tasks FOR DELETE USING (
 );
 
 -- RLS: profiles
+-- INSERT allows auth.uid() IS NULL so the signup trigger (which runs before a
+-- JWT exists) is not blocked; authenticated users are still limited to their own id.
 CREATE POLICY "profiles_select" ON profiles FOR SELECT USING (true);
-CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (id = auth.uid());
+CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (id = auth.uid() OR auth.uid() IS NULL);
 CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (id = auth.uid());
 CREATE POLICY "profiles_delete" ON profiles FOR DELETE USING (id = auth.uid());
 
@@ -135,12 +137,21 @@ CREATE TRIGGER on_workspace_created
   AFTER INSERT ON workspaces
   FOR EACH ROW EXECUTE FUNCTION add_workspace_owner();
 
--- TRIGGER: auto-create profile on signup
+-- TRIGGER: auto-create profile on signup.
+-- search_path is pinned and the body never raises, so a profile-insert problem
+-- can never break auth signup (the #1 hard requirement).
 CREATE OR REPLACE FUNCTION create_profile_on_signup()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-  INSERT INTO profiles (id, full_name, email)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', NEW.email);
+  INSERT INTO public.profiles (id, full_name, email)
+  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', NEW.email)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
   RETURN NEW;
 END;
 $$;

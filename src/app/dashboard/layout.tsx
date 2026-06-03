@@ -18,8 +18,10 @@ export default async function DashboardLayout({
     <NuqsAdapter>
       <WorkspaceProvider>
         <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-background p-6">
+          <div className="hidden md:flex">
+            <Sidebar />
+          </div>
+          <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
             {children}
           </main>
         </div>

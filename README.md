@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taskflow — Multi-Workspace Task Manager
 
-## Getting Started
+**Assignment submission for Aspio.io Fullstack Engineer role**
 
-First, run the development server:
+## Start / End Time
+
+- **Start:** June 2, 2026 — 3:00 PM EAT (East Africa Time, UTC+3)
+- **End:** June 3, 2026 — [fill in your exact end time] EAT
+
+---
+
+## Live URL
+
+[https://taskflow-andamlaka.vercel.app](https://taskflow-andamlaka.vercel.app)
+
+---
+
+## What Is Complete and Working
+
+- **Auth** — Sign up, sign in, sign out via Supabase Auth (email + password). Email confirmation enabled.
+- **Workspace dashboard** — Create workspaces, create projects, project cards with live task status counts as a color-coded bar.
+- **Project view** — Full task list with status badges, assignee, due date color coding (red = overdue). Inline status cycling by clicking the badge.
+- **Task detail panel** — All fields editable inline (title, description, status, assignee, due date). Save/discard affordance. Delete task.
+- **RLS** — All 4 operations (SELECT, INSERT, UPDATE, DELETE) on all tables. Workspace isolation enforced. Tested against direct API calls.
+- **Generated types** — `src/types/supabase.ts` generated via `supabase gen types typescript`. Zero `any` types.
+- **SSR client pattern** — `createBrowserClient` / `createServerClient` from `@supabase/ssr`. No deprecated direct `createClient` in components.
+- **Realtime** — Task changes broadcast via Supabase channels. Subscriptions cleaned up on unmount.
+- **URL-synced filters** — Status + assignee filters via `nuqs`. Sharing the URL restores exact filter state.
+- **Optimistic UI** — Task status updates applied immediately, rolled back with toast on API failure.
+- **Loading / empty / error states** — Every data-fetching view has all three states with calls to action.
+- **Edge Function** — `overdue-tasks`: accepts `project_id`, returns overdue tasks with assignee name. RLS enforced. Button in project view displays results.
+
+---
+
+## What Is Incomplete / Skipped
+
+- **Mobile navigation** — Sidebar hidden on mobile. Content is accessible but navigation requires desktop width. Would add a Sheet drawer with more time.
+- **Workspace member invite** — RLS fully supports multi-member workspaces; no invite UI was built.
+- **Dark mode** — CSS variables defined, no toggle wired.
+
+---
+
+## Architectural Decisions
+
+**Singleton browser client** — `@supabase/ssr` v0.10 creates a new instance per call. The singleton ensures the auth session is read once and shared, avoiding 403s from stale session reads on mutations.
+
+**No `.select().single()` on mutations** — Supabase's new ES256 JWT causes PostgREST's `prefer: return=representation` to fail the SELECT RLS check on newly inserted rows (RETURNING runs before the workspace_members trigger completes). Using `prefer: return=minimal` avoids this.
+
+**`nuqs` for URL state** — Handles Next.js `useSearchParams` Suspense boundary automatically. Manual `URLSearchParams` requires wrapping every consumer in `<Suspense>`.
+
+**TanStack Query** — The `onMutate` / `onError` lifecycle makes optimistic UI + realtime compose cleanly. Cache invalidation on realtime events is one line.
+
+**What I'd do with more time:** mobile drawer nav, workspace invite links, task drag-and-drop, project analytics, replace `<select>` with combobox components.
+
+---
+
+## How to Run Locally (5 commands)
 
 ```bash
+git clone https://github.com/Andamlaka/taskflow.git
+cd taskflow
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Fill in `.env.local` with your Supabase project URL and anon key, then run `schema.sql` in the Supabase SQL Editor.
